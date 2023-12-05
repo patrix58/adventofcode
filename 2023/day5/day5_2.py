@@ -50,7 +50,7 @@ print("Finished")
 print("Checking locations...")
 
 def check_nr(f, t, ranges):
-    print("Check ", f, t)
+    # print("Check ", f, t)
     change = False
     final = []
     i = 0
@@ -59,16 +59,17 @@ def check_nr(f, t, ranges):
         change = False
         for d, s, l in db[f][t]:
             diff = d - s
-            if s <= v1 < v2 < s+l:
+            if s <= v1 < v2 <= s+l:
                 final += [(v1+diff, v2+diff)]
-            elif v1 < s < s+l <= v2:
+            elif v1 <= s < s+l <= v2:
                 ranges += [(v1, s), (s+l, v2)]
                 final += [(d, d+l)]
             elif s <= v1 < s+l <= v2:
                 ranges += [(s+l, v2)]
                 final += [(v1+diff, d+l)]
             elif v1 < s < v2 <= s+l:
-                ranges += [(v1, s), (d, v2+diff)]
+                ranges += [(v1, s)]
+                final += [(d, v2+diff)]
             else:
                 continue
             change = True
@@ -77,7 +78,7 @@ def check_nr(f, t, ranges):
             final += [(v1, v2)]
         i += 1
     
-    print(final)
+    # print(final)
     return final
 
 mmin = 999999999999
