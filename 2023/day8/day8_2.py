@@ -1,45 +1,62 @@
 from pathlib import Path
 import sys
 import re
-import numpy as np
 
 PATTERN = re.compile(r"([A-Z\d]*) = \(([A-Z\d]*), ([A-Z\d]*)\)")
 
 lines = Path(sys.argv[1]).read_text().split("\n")
 
 instr = lines[0]
-nodes = []
-lefts = []
-rights = []
+
+db = {}
 for line in lines[2:]:
     m = PATTERN.match(line)
     assert m, line
     node, left, right = m.groups()
-    nodes.append(node)
-    lefts.append(left)
-    rights.append(right)
+    db[node] = (left, right)
 
-nodes = np.array(nodes)
-lefts = np.array(lefts)
-rights = np.array(rights)
 
-i = 0
-currents = np.array([node for node in nodes if node.endswith("A")])
-steps = 0
-while True:
-    # print(f"step = {steps+1}, currents = {currents}")
-    if i == len(instr):
-        i = 0
-    if np.all(np.char.endswith(currents, "Z")):
-        break
-    pos = np.where(np.isin(nodes, currents))[0]
-    # print(f"pos = {pos}")
-    # print(f"going {instr[i]}")
-    if instr[i] == "L":
-        currents = lefts[pos]
-    else:
-        currents = rights[pos]
-    steps += 1
-    i += 1
+currents = [node for node in db if node.endswith("A")]
+nrzs = len([node for node in db if node.endswith("Z")])
+zzs = {}
 
-print(steps)
+for current in currents:
+    zs = {}
+    scurrent = current
+    zzs[scurrent] = []
+    steps = 0
+    i = 0
+    while len(zzs[scurrent]) < nrzs and steps < 1_000_000:
+        if i == len(instr):
+            i = 0
+        if current.endswith("Z"):
+            if current in zs and zs[current] is not None:
+                zzs[scurrent].append((current, zs[current], steps - zs[current]))
+                zs[current] = None
+            elif current not in zs:
+                zs[current] = steps
+
+        if instr[i] == "L":
+            current = db[current][0]
+        else:
+            current = db[current][1]
+        steps += 1
+        i += 1
+
+print(zzs)
+
+nrs = [e[0][1] for e in zzs.values()]
+
+def lnko(a, b):
+    r = a % b
+    while r:
+        a = b
+        b = r
+        r = a % b
+    return b
+
+p = 1
+for nr in nrs:
+    p *= nr // lnko(p, nr)
+
+print(p)
